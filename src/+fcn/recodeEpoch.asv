@@ -1,0 +1,14 @@
+function tt = recodeEpoch(tt)
+
+time0 = '01-Jan-0000'
+time1 = '31-Oct-0021'
+time2 = '31-Dec-0021'
+time3 = 
+
+tt.Epoch(:) = nan;
+
+tt.Epoch(isbetween(tt.student_survey_timestamp,,)) = 1;
+tt.Epoch(isbetween(tt.student_survey_timestamp,'31-Oct-0021',)) = 2;
+tt.Epoch(isbetween(tt.student_survey_timestamp,'01-Jan-0022','01-Jan-0023')) = 3;
+
+end
