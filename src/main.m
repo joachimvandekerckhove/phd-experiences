@@ -3,6 +3,8 @@
 %% Load and process data
 
 raw_data = fcn.loadData();
+writetable(data, 'data/raw.xls')
+
 raw_data = fcn.imputeTimestamps(raw_data);
 
 data = fcn.separateRows(raw_data);
@@ -16,6 +18,8 @@ data = fcn.recodeEpoch(data);
 data(isnan(data.IV),:) = [];
 
 data = sortrows(data, ["IV" "Epoch" "Person"]);
+
+writetable(data, 'data/processed.xls')
 
 %%
 
