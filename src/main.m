@@ -3,7 +3,7 @@
 %% Load and process data
 
 raw_data = fcn.loadData();
-writetable(data, 'data/raw.xls')
+writetable(data, 'data/raw.csv')
 
 raw_data = fcn.imputeTimestamps(raw_data);
 
@@ -19,7 +19,7 @@ data(isnan(data.IV),:) = [];
 
 data = sortrows(data, ["IV" "Epoch" "Person"]);
 
-writetable(data, 'data/processed.xls')
+writetable(data, 'data/processed.csv')
 
 %%
 
