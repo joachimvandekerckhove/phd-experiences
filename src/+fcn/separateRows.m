@@ -19,10 +19,10 @@ vn2 = ["record_id" "Duplicate_1" "Duplicate_2" "Duplicate_3" ...
     "gv_fdbk_nu" "timeblock_j22_nu" "hours_j22_nu" ...
     "conference_submit_nu" "conference_accept_nu" "perma_hap_nu"];
 
-dat1 = raw_data(:,vn1); dat1.Epoch = ones(size(dat1.record_id));
-dat2 = raw_data(:,vn2); dat2.Properties.VariableNames = vn1;
+dat1 = raw_data(:,vn1);
+dat2 = raw_data(:,vn2);
 
-dat2.Epoch = 2*ones(size(dat1.record_id));
+dat2.Properties.VariableNames = vn1;
 
 data = [dat1;dat2];
 
