@@ -1,71 +1,110 @@
+%% Analysis of the IGE project data
+% Multiple DVs, 3 groups, 3 epochs, looking for group-by-epoch interaction
+% s.t. one group increases more than others on any DV.
+
+%% Preamble
+% First, clear the workspace and add the new functions to the path.  Then
+% set the false alarm rate and decide whether to use Bonferroni correction.
+% Then decide on priors.
+
+clear
+close all
+addpath src
+
+alpha = 0.05;
+doBfc = true;
+
+priors = struct( ...
+    'mean', @(x)normpdf(x, 0.0, 1.0)  , ...
+    'std' , @(x)gampdf (x, 2.0, 2.0)   ...
+    );
 
 
 %% Load and process data
+% Raw data has a number of small deficiencies that need fixing.  For
+% example, missing time stamps were imputed by using the time stamp of the
+% previous index (iteratively if needed).  Multiplied values of DVs were
+% deduplicated by assigning to the appropriate epoch.
 
-raw_data = fcn.loadData();
-writetable(data, 'data/raw.csv')
+data = fcn.preprocess( ...
+    'data/raw.csv',    ...
+    'data/processed.csv');
+data.hours = log(data.hours + 1);
 
-raw_data = fcn.imputeTimestamps(raw_data);
 
-data = fcn.separateRows(raw_data);
-data = fcn.resolveDuplicates(data);
-data = removevars(data, ["record_id" "Duplicate_1" "Duplicate_2" "Duplicate_3" ...
-    "redcap_survey_identifier"]);
+%% Loop over DVs to analyze independently
+% Assumption of independence is most likely violated, so keep in mind this
+% is a liberal test.
 
-data = fcn.generateIV(data);
-data = fcn.recodeEpoch(data);
+dvList = [ ...
+    "advanced"           ...
+    "milestones_cogsci"  ...
+    "milestones_psysci"  ...
+    "enjoy"              ...
+    "good"               ...
+    "nonexperts"         ...
+    "discouraged"        ...
+    "writers_block"      ...
+    "inspired"           ...
+    "cant_start"         ...
+    "rejection"          ...
+    "rcv_fdbk"           ...
+    "gv_fdbk"            ...
+    "timeblock"          ...
+    "conference_submit"  ...
+    "conference_accept"  ...
+    "perma_hap"          ...
+    "hours"              ];
 
-data(isnan(data.IV),:) = [];
+nDvs = numel(dvList);
 
-data = sortrows(data, ["IV" "Epoch" "Person"]);
+zs = nan(nDvs, 1);
+results.Omnib = table( zs, zs, zs, zs, ...
+    'RowNames', dvList, 'VariableNames', ["logLR" "df" "p" "h"]);
+results.Group   = results.Omnib ;
+results.Epoch   = results.Omnib ;
 
-writetable(data, 'data/processed.csv')
+adjustedAlpha = alpha / (nDvs^doBfc);
+
 
 %%
 
-dvList = ["advanced" ...
-    "milestones_cogsci" "milestones_psysci" "enjoy" ...
-    "good" "nonexperts" "discouraged" "writers_block" ...
-    "inspired" "cant_start" "rejection" "rcv_fdbk" ...
-    "gv_fdbk" "timeblock" "hours" ...
-    "conference_submit" "conference_accept" "perma_hap"];
-% dvList =  "advanced"
-ctr = 0;
-e = .05;
-xax = repmat(1:3,3,1) + repmat([-1 0 1]'*e,1,3);
-for dvIdx = dvList
-    subset = data;
-    rm = isnan(data.(dvIdx));
-    subset(rm,:) = [];
-    dv = subset.(dvIdx);
-    if all(ismember(dv, 0:1))
-        for t = 1:3
-            for g = 1:3
-                sub = dv(subset.IV==g & subset.Epoch==t & ~isnan(dv));
-                sc(g,t) = sum( sub);
-                fl(g,t) = sum(~sub);
-            end
-        end
-        mn = betainv(.500*ones(3), sc, fl);
-        lo = mn - betainv(.025*ones(3), sc, fl);
-        hi = betainv(.975*ones(3), sc, fl) - mn;
-    else
-        for t = 1:3
-            for g = 1:3
-                mn(g,t) = mean(dv(subset.IV==g & subset.Epoch==t), 'omitnan');
-                sd(g,t) = std(dv(subset.IV==g & subset.Epoch==t), 'omitnan');
-            end
-        end
-        lo = 1.96 * sd;
-        hi = 1.96 * sd;
-    end
-    ctr = ctr + 1;
-    subplot(4,5,ctr)
-    errorbar(xax', mn', lo', hi', 'o-')
-    xlim([.75 3.25])
-    title(dvIdx)
-    xlabel epoch
-    set(gca, 'XTick', 1:3)
-end
-legend 'Group 1' 'Group 2' 'Group 3'
+for dvName = dvList
 
+    % First, plot the DVs in a standard ANOVA plot
+
+    fcn.plotDv(data, dvName, gca);
+    legend 'Group 1' 'Group 2' 'Group 3' 'Location' 'best'
+
+    % Next, conduct an omnibus test of deviation from the global null
+    % hypothesis that all 9 means are identical.  If this is met, there is
+    % no need to look for interactions.
+
+    stats = fcn.getStats(data, dvName, priors);
+
+    globalLlik = fcn.globalLikelihood(stats);
+
+    results.Omnib(dvName,:) = fcn.computeTestStats('Condition', ...
+        stats, globalLlik, adjustedAlpha);
+
+    results.Group(dvName,:) = fcn.computeTestStats('IV', ...
+        stats, globalLlik, adjustedAlpha);
+
+    results.Epoch(dvName,:) = fcn.computeTestStats('Epoch', ...
+        stats, globalLlik, adjustedAlpha);
+
+    fcn.writeReport(dvName, results, data)
+
+end
+
+
+%%
+
+disp(results.Omnib)
+writetable(results.Omnib, 'results/omnibus.csv', 'WriteRowNames', true)
+
+disp(results.Group)
+writetable(results.Group, 'results/group.csv', 'WriteRowNames', true)
+
+disp(results.Epoch)
+writetable(results.Epoch, 'results/epoch.csv', 'WriteRowNames', true)
