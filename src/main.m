@@ -11,7 +11,7 @@ close all
 addpath src
 
 alpha = 0.05;
-doBfc = true;
+doBfc = 0;
 
 
 %% Load and process data
