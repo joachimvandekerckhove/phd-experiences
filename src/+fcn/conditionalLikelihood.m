@@ -1,7 +1,6 @@
 function [condLlik, df] = conditionalLikelihood(stats, indicator)
 
 [condLlik.classical, df] = classical(stats, indicator);
-% condLlik.bayesian = bayesian(stats, indicator);
 
 end
 
@@ -20,9 +19,4 @@ end
 df = 2 * numel(unique(indicatorVector)) - 2;
 
 end
-
-
-% function condLlik = bayesian(stats, indicator)
-% 
-% end
 

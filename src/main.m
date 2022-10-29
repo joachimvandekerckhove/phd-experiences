@@ -5,7 +5,6 @@
 %% Preamble
 % First, clear the workspace and add the new functions to the path.  Then
 % set the false alarm rate and decide whether to use Bonferroni correction.
-% Then decide on priors.
 
 clear
 close all
@@ -13,11 +12,6 @@ addpath src
 
 alpha = 0.05;
 doBfc = true;
-
-priors = struct( ...
-    'mean', @(x)normpdf(x, 0.0, 1.0)  , ...
-    'std' , @(x)gampdf (x, 2.0, 2.0)   ...
-    );
 
 
 %% Load and process data
@@ -80,7 +74,7 @@ for dvName = dvList
     % hypothesis that all 9 means are identical.  If this is met, there is
     % no need to look for interactions.
 
-    stats = fcn.getStats(data, dvName, priors);
+    stats = fcn.getStats(data, dvName);
 
     globalLlik = fcn.globalLikelihood(stats);
 

@@ -1,4 +1,4 @@
-function stats = getStats(data, thisDv, priors)
+function stats = getStats(data, thisDv)
 
 subset = data;
 toRemove = isnan(data.(thisDv));
@@ -18,9 +18,5 @@ stats.subset = subset(:, ["IV" "Epoch"]);
 stats.subset.DV = dv;
 
 stats.subset.Condition = stats.subset.Epoch + 3 * (stats.subset.IV - 1);
-
-if nargin > 2
-    stats.priors = priors;
-end
 
 end
