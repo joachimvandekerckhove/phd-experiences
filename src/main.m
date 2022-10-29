@@ -26,9 +26,7 @@ data = fcn.preprocess( ...
 data.hours = log(data.hours + 1);
 
 
-%% Loop over DVs to analyze independently
-% Assumption of independence is most likely violated, so keep in mind this
-% is a liberal test.
+%% Preallocate variables and set up loop over DVs 
 
 dvList = [ ...
     "advanced"           ...
@@ -54,21 +52,23 @@ nDvs = numel(dvList);
 
 zs = nan(nDvs, 1);
 results.Omnib = table( zs, zs, zs, zs, ...
-    'RowNames', dvList, 'VariableNames', ["logLR" "df" "p" "h"]);
-results.Group   = results.Omnib ;
-results.Epoch   = results.Omnib ;
+    'RowNames', dvList, ...
+    'VariableNames', ["logLR" "df" "p" "h"]);
+results.Group = results.Omnib ;
+results.Epoch = results.Omnib ;
 
 adjustedAlpha = alpha / (nDvs^doBfc);
 
 
-%%
+%% Loop over DVs to analyze independently
+% Assumption of independence is most likely violated, so keep in mind this
+% is a liberal test.
 
 for dvName = dvList
 
     % First, plot the DVs in a standard ANOVA plot
 
     fcn.plotDv(data, dvName, gca);
-    legend 'Group 1' 'Group 2' 'Group 3' 'Location' 'best'
 
     % Next, conduct an omnibus test of deviation from the global null
     % hypothesis that all 9 means are identical.  If this is met, there is
@@ -92,13 +92,12 @@ for dvName = dvList
 end
 
 
-%%
+%% Write results to files and display
+
+writetable(results.Omnib, 'results/omnibus.csv', 'WriteRowNames', true)
+writetable(results.Group, 'results/group.csv'  , 'WriteRowNames', true)
+writetable(results.Epoch, 'results/epoch.csv'  , 'WriteRowNames', true)
 
 disp(results.Omnib)
-writetable(results.Omnib, 'results/omnibus.csv', 'WriteRowNames', true)
-
 disp(results.Group)
-writetable(results.Group, 'results/group.csv', 'WriteRowNames', true)
-
 disp(results.Epoch)
-writetable(results.Epoch, 'results/epoch.csv', 'WriteRowNames', true)

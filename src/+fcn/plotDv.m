@@ -15,4 +15,8 @@ title(thisDv, 'Interpreter', 'none')
 xlabel epoch
 set(gca, 'XTick', 1:3)
 
+legend 'Group 1' 'Group 2' 'Group 3' 'Location' 'best'
+
+exportgraphics(gcf, sprintf('figures/%s.pdf', thisDv))
+
 end
